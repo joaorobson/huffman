@@ -1,42 +1,42 @@
 import React from "react";
 import "./App.css";
-import Tree from 'react-d3-tree';
-
+import Tree from "react-d3-tree";
 
 class App extends React.Component {
-
-  constructor(props){
+  constructor(props) {
     super(props);
     this.state = {
       treeData: []
-    }
+    };
   }
 
-  jsonToArrayOfJson(inputJson){
+  jsonToArrayOfJson(inputJson) {
     // Turns JSON {a: 1, b: 2} into array [{a: 1}, {b: 2}]
     var array = [];
-    for(var k in inputJson){
+    for (var k in inputJson) {
       var auxJson = {};
-      auxJson['frequency'] = inputJson[k];
-      auxJson['name'] = k;
+      auxJson["frequency"] = inputJson[k];
+      auxJson["name"] = k;
       array.push(auxJson);
     }
     return array;
   }
 
-  sortByFrequency(a, b){
-    if(a.frequency < b.frequency){
+  sortByFrequency(a, b) {
+    if (a.frequency < b.frequency) {
       return -1;
-    }else if(a.frequency === b.frequency){
+    } else if (a.frequency === b.frequency) {
       return 0;
-    }else{
+    } else {
       return 1;
     }
   }
 
-  countRepetitions(array){
+  countRepetitions(array) {
     var count = {};
-    array.forEach((e) => {count[e] = (count[e] || 0)+1});
+    array.forEach(e => {
+      count[e] = (count[e] || 0) + 1;
+    });
 
     return count;
   }
@@ -46,13 +46,10 @@ class App extends React.Component {
       let leftNode = frequencies.shift();
       let rightNode = frequencies.shift();
       let newNode = {
-        children: [
-          leftNode,
-          rightNode,
-        ],
+        children: [leftNode, rightNode],
         name: null,
         frequency: leftNode.frequency + rightNode.frequency
-      }
+      };
       frequencies.unshift(newNode);
       frequencies.sort(this.sortByFrequency);
     }
@@ -88,7 +85,7 @@ class App extends React.Component {
         var myImageData = ctx.createImageData(height, width);
 
         var pixels = myImageData.data;
-        var pixelsRGB = []
+        var pixelsRGB = [];
         console.log(imageContent.length);
         console.log(height, width);
         var j = 0;
@@ -111,28 +108,47 @@ class App extends React.Component {
         sortedDistribution.sort(this.sortByFrequency);
         var treeObject = this.constructTree(sortedDistribution);
 
-        this.setState({treeData: [treeObject]});
+        this.setState({ treeData: [treeObject] });
         var image = new Image();
 
         image.src = canvas.toDataURL();
-        document.body.appendChild(image);
+        document.getElementById("app").appendChild(image);
       }
     };
     reader.readAsBinaryString(file);
   }
 
+  componentDidMount() {
+    const dimensions = this.treeContainer.getBoundingClientRect();
+    this.setState({
+      translate: {
+        x: dimensions.width / 2,
+        y: dimensions.height / 2
+      }
+    });
+  }
   render() {
-    console.log(this.state);
     return (
       <div className="App">
-        <header className="App-header">
+        <header id="app" className="App-header">
           <input
             type="file"
             onChange={e => this.fileUpload(e.target.files[0], "ola")}
           />
         </header>
-        <div id="treeWrapper" style={{width: '50em', height: '20em'}}>
-          {this.state.treeData.length && (<Tree data={this.state.treeData} />)}
+        <div
+          id="treeWrapper"
+          style={{ width: "100%", height: "20em" }}
+          ref={tc => (this.treeContainer = tc)}
+        >
+          {this.state.treeData.length > 0 && (
+            <Tree
+              zoom={0}
+              orientation="vertical"
+              data={this.state.treeData}
+              translate={this.state.translate}
+            />
+          )}
         </div>
       </div>
     );
