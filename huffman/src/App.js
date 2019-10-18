@@ -1,12 +1,18 @@
 import React from "react";
 import "./App.css";
 import Tree from "react-d3-tree";
+import "semantic-ui-css/semantic.min.css";
+import { Button, Label, Step } from "semantic-ui-react";
 
+var pixels = [];
+var pixelsRGB = [];
 class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      treeData: []
+      treeData: [],
+      codes: {},
+      active: "Imagem"
     };
   }
 
@@ -56,16 +62,42 @@ class App extends React.Component {
     return frequencies[0];
   }
 
+  mountEncodedImage(imagePixels) {
+    var encodedImage = "";
+    var l = [];
+    imagePixels.forEach(i => {
+      encodedImage += this.state.codes[i];
+    });
+    return encodedImage;
+  }
+
+  getCodes(tree, encodedImage, top, codes) {
+    if (tree.children && tree.children.length >= 1) {
+      encodedImage[top] = 0;
+      this.getCodes(tree.children[0], encodedImage, top + 1, codes);
+    }
+    if (tree.children && tree.children.length >= 2) {
+      encodedImage[top] = 1;
+      this.getCodes(tree.children[1], encodedImage, top + 1, codes);
+    }
+    if (!tree.children) {
+      codes[tree.name] = encodedImage.join("");
+      //this.setState({codes:codes})
+    }
+    return codes;
+  }
+
   fileUpload(file, name) {
     const reader = new FileReader();
 
     var canvas = document.createElement("canvas"),
       ctx = canvas.getContext("2d");
+
+    var scope = this;
     reader.onloadend = e => {
       if (e.target.readyState === FileReader.DONE) {
         var content = e.target.result;
 
-        console.log(content.length);
         var regex = /P6\n\d* \d*\n\d*\n([\s\S]*)/;
         var imageContent = regex.exec(content)[1];
         var height = parseInt(
@@ -84,9 +116,8 @@ class App extends React.Component {
         canvas.height = height;
         var myImageData = ctx.createImageData(height, width);
 
-        var pixels = myImageData.data;
-        var pixelsRGB = [];
-        console.log(imageContent.length);
+        pixels = myImageData.data;
+        pixelsRGB = [];
         console.log(height, width);
         var j = 0;
         for (let i = 0; i < pixels.length; i += 4) {
@@ -100,56 +131,121 @@ class App extends React.Component {
           pixelsRGB.push(imageContent.charCodeAt(j + 2));
           j += 3;
         }
-        console.log(pixels);
         ctx.putImageData(myImageData, 0, 0);
 
         var repetitions = this.countRepetitions(pixelsRGB);
         var sortedDistribution = this.jsonToArrayOfJson(repetitions);
         sortedDistribution.sort(this.sortByFrequency);
-        var treeObject = this.constructTree(sortedDistribution);
+        var treeObject = [this.constructTree(sortedDistribution)];
 
-        this.setState({ treeData: [treeObject] });
         var image = new Image();
 
         image.src = canvas.toDataURL();
+        image.id = "image";
         document.getElementById("app").appendChild(image);
+        window.location.href = "#image";
+        var codes = {};
+        this.setState({ treeData: treeObject }, () => {
+          setTimeout(() => {
+            this.setState({
+              codes: this.getCodes(this.state.treeData[0], [], 0, codes)
+            });
+          }, 7000);
+        });
       }
     };
     reader.readAsBinaryString(file);
   }
 
-  componentDidMount() {
-    const dimensions = this.treeContainer.getBoundingClientRect();
-    this.setState({
-      translate: {
-        x: dimensions.width / 2,
-        y: dimensions.height / 2
-      }
-    });
+  componentDidUpdate(a, b) {
+    console.log("11oooo", this.state, a, b);
+    if (b.active !== this.state.active && b.active === "Imagem") {
+      console.log("oooi");
+      const dimensions = this.treeContainer.getBoundingClientRect();
+      this.setState({
+        translate: {
+          x: dimensions.width / 2,
+          y: dimensions.height / 2
+        }
+      });
+    }
   }
+
+  handleClick = (e, { title }) => this.setState({ active: title });
   render() {
+    const { active } = this.state;
+    console.log(this.treeContainer);
+    var encodedImage;
+    if (Object.keys(this.state.codes).length) {
+      encodedImage = this.mountEncodedImage(pixelsRGB);
+    }
     return (
       <div className="App">
-        <header id="app" className="App-header">
-          <input
-            type="file"
-            onChange={e => this.fileUpload(e.target.files[0], "ola")}
+        <Step.Group style={{ marginTop: "3%" }}>
+          <Step
+            active={active === "Imagem"}
+            icon="image"
+            link
+            onClick={this.handleClick}
+            title="Imagem"
+            description="Selecione uma imagem para ser codificada"
           />
-        </header>
-        <div
-          id="treeWrapper"
-          style={{ width: "100%", height: "20em" }}
-          ref={tc => (this.treeContainer = tc)}
-        >
-          {this.state.treeData.length > 0 && (
-            <Tree
-              zoom={0}
-              orientation="vertical"
-              data={this.state.treeData}
-              translate={this.state.translate}
-            />
+          <Step
+            active={active === "Árvore"}
+            disabled={this.state.treeData.length === 0 || !this.treeContainer}
+            icon="tree"
+            link
+            onClick={this.handleClick}
+            title="Árvore"
+            description="Mostrar árvore de Huffman"
+          />
+        </Step.Group>
+        {this.state.active === "Imagem" && (
+          <div id="app" className="App-header">
+            <Label as="label" basic htmlFor="upload" style={{ margin: "10%" }}>
+              <Button
+                icon="upload"
+                label={{
+                  basic: true,
+                  content: "Selecione uma imagem no formato .ppm"
+                }}
+                labelPosition="right"
+              />
+              <input
+                hidden
+                id="upload"
+                multiple
+                onChange={e => this.fileUpload(e.target.files[0], "ola")}
+                type="file"
+              />
+            </Label>
+          </div>
+        )}
+        {(
+          <div
+            id="treeWrapper"
+            style={{ width: "100%", height: "100%", marginTop: "10%", display: (this.state.active === "Imagem" ? 'none': 'block') }}
+            ref={tc => (this.treeContainer = tc)}
+          >
+          {Object.keys(this.state.codes).length > 0 && (
+            <div>
+              <h4 style={{color: 'black'}}>Encoded Image</h4>
+              <p style={{ color: "black" }}>
+                {encodedImage.slice(0, 10) + "..." + encodedImage.slice(encodedImage.length - 10, encodedImage.length)}
+              </p>
+            </div>
           )}
-        </div>
+            {this.state.treeData.length > 0 && (
+              <Tree
+                zoom={0}
+                orientation="vertical"
+                data={this.state.treeData}
+                translate={this.state.translate}
+                transitionDuration={0}
+              />
+            )}
+          </div>
+        )}
       </div>
     );
   }
