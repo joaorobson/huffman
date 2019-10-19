@@ -64,7 +64,6 @@ class App extends React.Component {
 
   mountEncodedImage(imagePixels) {
     var encodedImage = "";
-    var l = [];
     imagePixels.forEach(i => {
       encodedImage += this.state.codes[i];
     });
@@ -95,7 +94,6 @@ class App extends React.Component {
     var canvas = document.createElement("canvas"),
       ctx = canvas.getContext("2d");
 
-    var scope = this;
     reader.onloadend = e => {
       if (e.target.readyState === FileReader.DONE) {
         var content = e.target.result;
@@ -158,9 +156,8 @@ class App extends React.Component {
     reader.readAsBinaryString(file);
   }
 
-  componentDidUpdate(a, b) {
-    console.log("11oooo", this.state, a, b);
-    if (b.active !== this.state.active && b.active === "Imagem") {
+  componentDidUpdate(prevState, prevProps) {
+    if (prevProps.active !== this.state.active && prevProps.active === "Imagem") {
       const dimensions = this.treeContainer.getBoundingClientRect();
       this.setState({
         translate: {
