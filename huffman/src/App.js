@@ -88,6 +88,20 @@ class App extends React.Component {
     return codes;
   }
 
+  fileDownload(encodedImage) {
+    var text = JSON.stringify(this.state.treeData[0]) + "\n" + encodedImage;
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', "image.jv");
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+  }
+
   fileUpload(file, name) {
     const reader = new FileReader();
 
@@ -229,6 +243,15 @@ class App extends React.Component {
               <p style={{ color: "black" }}>
                 {encodedImage.slice(0, 10) + "..." + encodedImage.slice(encodedImage.length - 10, encodedImage.length)}
               </p>
+              <Button
+                icon="download"
+                label={{
+                  basic: true,
+                  content: "Fazer download da imagem codificada"
+                }}
+                labelPosition="right"
+                onClick={() => {this.fileDownload(encodedImage)}}
+              />
             </div>
           )}
             {this.state.treeData.length > 0 && (
