@@ -75,10 +75,12 @@ class App extends React.Component {
     if (tree.children && tree.children.length >= 1) {
       encodedImage[top] = 0;
       this.getCodes(tree.children[0], encodedImage, top + 1, codes);
+      encodedImage.pop();
     }
     if (tree.children && tree.children.length >= 2) {
       encodedImage[top] = 1;
       this.getCodes(tree.children[1], encodedImage, top + 1, codes);
+      encodedImage.pop();
     }
     if (!tree.children) {
       codes[tree.name] = encodedImage.join("");
@@ -118,7 +120,6 @@ class App extends React.Component {
 
         pixels = myImageData.data;
         pixelsRGB = [];
-        console.log(height, width);
         var j = 0;
         for (let i = 0; i < pixels.length; i += 4) {
           pixels[i] = imageContent.charCodeAt(j);
@@ -160,7 +161,6 @@ class App extends React.Component {
   componentDidUpdate(a, b) {
     console.log("11oooo", this.state, a, b);
     if (b.active !== this.state.active && b.active === "Imagem") {
-      console.log("oooi");
       const dimensions = this.treeContainer.getBoundingClientRect();
       this.setState({
         translate: {
@@ -174,7 +174,6 @@ class App extends React.Component {
   handleClick = (e, { title }) => this.setState({ active: title });
   render() {
     const { active } = this.state;
-    console.log(this.treeContainer);
     var encodedImage;
     if (Object.keys(this.state.codes).length) {
       encodedImage = this.mountEncodedImage(pixelsRGB);
