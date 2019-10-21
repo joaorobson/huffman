@@ -83,23 +83,19 @@ class App extends React.Component {
     }
     if (!tree.children) {
       codes[tree.name] = encodedImage.join("");
-      //this.setState({codes:codes})
     }
     return codes;
   }
 
   fileDownload(encodedImage) {
-    var text = JSON.stringify(this.state.treeData[0]) + "\n" + encodedImage;
+    var text = new Blob([JSON.stringify(this.state.treeData[0]) + "\n" + encodedImage], {type: "application/octet-stream"});
     var element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-    element.setAttribute('download', "image.jv");
-
-    element.style.display = 'none';
-    document.body.appendChild(element);
-
+    element.setAttribute('href', URL.createObjectURL(text));
+    element.setAttribute('download', "image");
+    console.log('e', element)
+    element.setAttribute('id', 'imagedownload')
+    document.body.appendChild(element)
     element.click();
-
-    document.body.removeChild(element);
   }
 
   fileUpload(file, name) {
