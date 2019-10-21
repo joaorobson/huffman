@@ -83,9 +83,19 @@ class App extends React.Component {
     }
     if (!tree.children) {
       codes[tree.name] = encodedImage.join("");
-      //this.setState({codes:codes})
     }
     return codes;
+  }
+
+  fileDownload(encodedImage) {
+    var text = new Blob([JSON.stringify(this.state.treeData[0]) + "\n" + encodedImage], {type: "application/octet-stream"});
+    var element = document.createElement('a');
+    element.setAttribute('href', URL.createObjectURL(text));
+    element.setAttribute('download', "image");
+    console.log('e', element)
+    element.setAttribute('id', 'imagedownload')
+    document.body.appendChild(element)
+    element.click();
   }
 
   fileUpload(file, name) {
@@ -229,6 +239,15 @@ class App extends React.Component {
               <p style={{ color: "black" }}>
                 {encodedImage.slice(0, 10) + "..." + encodedImage.slice(encodedImage.length - 10, encodedImage.length)}
               </p>
+              <Button
+                icon="download"
+                label={{
+                  basic: true,
+                  content: "Fazer download da imagem codificada"
+                }}
+                labelPosition="right"
+                onClick={() => {this.fileDownload(encodedImage)}}
+              />
             </div>
           )}
             {this.state.treeData.length > 0 && (
