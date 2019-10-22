@@ -1,5 +1,5 @@
 # Huffman encoder
-Huffman app to encode images
+Huffman app to encode images.
 
 To run the project, execute the commands:
 ```
